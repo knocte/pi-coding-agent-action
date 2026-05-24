@@ -11,6 +11,7 @@
 import * as github from '@actions/github';
 import { Temporal } from '@js-temporal/polyfill';
 import { DEFAULT_TRIGGER } from './constants';
+import { sanitizeContent } from './sanitize';
 import { isPR, getContextType } from './context-utils';
 import { getCoreAdapter } from './index';
 import type { IssueOrPullRequestContext } from './types';
@@ -95,7 +96,7 @@ const CONTEXT_EXTRACTORS: Record<
     return {
       title: issue.title,
       number: issue.number,
-      ...(issue.body !== undefined ? { body: issue.body } : {}),
+      ...(issue.body !== undefined ? { body: sanitizeContent(issue.body) } : {}),
     };
   },
   pull_request: payload => {
@@ -106,7 +107,7 @@ const CONTEXT_EXTRACTORS: Record<
     return {
       title: pr.title,
       number: pr.number,
-      ...(pr.body !== undefined ? { body: pr.body } : {}),
+      ...(pr.body !== undefined ? { body: sanitizeContent(pr.body) } : {}),
     };
   },
 };
@@ -210,7 +211,7 @@ async function getComment(): Promise<TriggeringComment | undefined> {
       return;
     }
 
-    const body = (review.body as string).replace(getTrigger(), '').trim();
+    const body = sanitizeContent((review.body as string).replace(getTrigger(), '').trim());
     return { id: review.id, body };
   }
 
@@ -218,6 +219,6 @@ async function getComment(): Promise<TriggeringComment | undefined> {
     return;
   }
 
-  const body = comment.body.replace(getTrigger(), '').trim();
+  const body = sanitizeContent(comment.body.replace(getTrigger(), '').trim());
   return { id: comment.id, body };
 }
