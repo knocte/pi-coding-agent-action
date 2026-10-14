@@ -303,7 +303,16 @@ export const loggingFactory = (
 
     emitLogLines(logger, formatToolsSection(pi.getAllTools()));
     emitLogLines(logger, formatSystemPromptSection(ctx.getSystemPrompt()));
-    emitLogLines(logger, formatUserPromptSection(event.prompt, event.images));
+    // SDK >= 1.2.0: `before_agent_start` is a union on `messageType`. Runs
+    // started via `session.prompt()` carry `messageType: "user"`; runs started
+    // by `pi.sendMessage(..., { triggerTurn: true })` carry the starting
+    // message instead. This orchestrator only ever prompts, so log the prompt
+    // for user events and a fallback line otherwise.
+    if (event.messageType === 'user') {
+      emitLogLines(logger, formatUserPromptSection(event.prompt, event.images));
+    } else {
+      emitLogLines(logger, [info('👤 Starting Message'), info('(extension-triggered run)')]);
+    }
 
     logger.endGroup?.();
 

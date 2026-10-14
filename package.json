@@ -42,30 +42,30 @@
   "dependencies": {
     "@alexanderfortin/pi-orchestrator": "workspace:*",
     "@alexanderfortin/pi-platform-github": "workspace:*",
-    "@earendil-works/pi-agent-core": "^1.0.4",
-    "@earendil-works/pi-ai": "^1.0.4",
-    "@earendil-works/pi-coding-agent": "^1.0.4"
+    "@earendil-works/pi-agent-core": "^1.2.0",
+    "@earendil-works/pi-ai": "^1.2.0",
+    "@earendil-works/pi-coding-agent": "^1.2.0"
   },
   "devDependencies": {
     "@actions/github": "^9.1.1",
-    "@alexanderfortin/semantic-release-keep-a-changelog": "^0.5.0",
+    "@alexanderfortin/semantic-release-keep-a-changelog": "^0.5.1",
     "@semantic-release/commit-analyzer": "^13.0.1",
     "@semantic-release/exec": "^7.1.0",
     "@semantic-release/git": "^11.0.1",
     "@semantic-release/github": "^12.0.10",
     "@semantic-release/npm": "^13.2.0",
     "@semantic-release/release-notes-generator": "^14.1.1",
-    "@types/node": "^26.6.4",
-    "@typescript-eslint/eslint-plugin": "^8.71.0",
-    "@typescript-eslint/parser": "^8.71.0",
-    "@vitest/coverage-v8": "^5.0.0",
+    "@types/node": "^26.6.5",
+    "@typescript-eslint/eslint-plugin": "^8.71.2",
+    "@typescript-eslint/parser": "^8.71.2",
+    "@vitest/coverage-v8": "^5.0.4",
     "eslint": "^10.12.0",
-    "fallow": "^3.31.0",
-    "prettier": "^3.9.9",
+    "fallow": "^3.33.1",
+    "prettier": "^3.9.10",
     "semantic-release": "^25.0.9",
     "tsx": "^4.23.15",
     "typescript": "~6.0.3",
-    "vitest": "^5.0.3",
+    "vitest": "^5.0.4",
     "yaml": "^2.9.1"
   }
 }

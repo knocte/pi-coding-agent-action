@@ -614,6 +614,44 @@ describe('ActionOrchestrator', () => {
       expect(mockPiAgent.exportSessionHtml).toHaveBeenCalled();
     });
 
+    test('marks action as failed when run is aborted without error', async () => {
+      setAgentRunResult(mockPiAgent, { aborted: true });
+
+      const orchestrator = createOrchestrator();
+      await expect(orchestrator.execute()).resolves.toBeUndefined();
+
+      expect(mockOutputSink.setFailed).toHaveBeenCalledWith(
+        expect.objectContaining({ message: 'Agent session was aborted before completing' })
+      );
+      expect(mockOutputSink.setOutput).toHaveBeenCalledWith('success', false);
+    });
+
+    test('posts partial result with aborted notice when run is aborted', async () => {
+      setAgentRunResult(mockPiAgent, {
+        result: 'Partial progress before cancellation',
+        aborted: true,
+      });
+
+      const orchestrator = createOrchestrator();
+      await orchestrator.execute();
+
+      const [text] = getFinalCommentCall(mockGit);
+      expect(text).toBe(
+        'Partial progress before cancellation\n\n---\n\n❌ Agent session ended with error: Agent session was aborted before completing'
+      );
+    });
+
+    test('does not log success banner when run is aborted', async () => {
+      setAgentRunResult(mockPiAgent, { aborted: true });
+
+      const orchestrator = createOrchestrator();
+      await orchestrator.execute();
+
+      const infoCalls = (mockCore.info as any).mock.calls.map((c: any[]) => c[0] as string);
+      expect(infoCalls).not.toContain('✅ Agent session completed');
+      expect(infoCalls).toContain('⚠️ Agent session was aborted before completing');
+    });
+
     test('deletes reaction when session ends with error', async () => {
       const mockReaction = setAddReactionReturn(mockGit, 999);
       setAgentRunResult(mockPiAgent, { error: 'quota exceeded' });

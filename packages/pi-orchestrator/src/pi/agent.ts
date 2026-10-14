@@ -87,6 +87,12 @@ export class Agent {
    */
   private lastAgentError: string | undefined;
   /**
+   * Whether the most recent run ended because it was aborted. Captured from
+   * the `aborted` flag on the `agent_settled` session event and resolved to
+   * its final value by the time `run()` returns.
+   */
+  private lastRunAborted = false;
+  /**
    * The session event handler registered during {@link ready}. Stored as
    * a field so that test helpers can wire mock sessions to dispatch events
    * through the same handler.
@@ -338,6 +344,7 @@ export class Agent {
           // or queued continuations will fire. Route the prompt-complete
           // callback here for cleaner lifecycle semantics (the agent is
           // truly done, not just one iteration finished).
+          this.lastRunAborted = event.aborted ?? false;
           this.events.onPromptComplete?.();
           break;
         default:
@@ -448,8 +455,10 @@ export class Agent {
     }
 
     // Reset error state for this run. The agent_end event handler will
-    // populate this field during the session.
+    // populate this field during the session, and the agent_settled handler
+    // records whether the run was aborted.
     this.lastAgentError = undefined;
+    this.lastRunAborted = false;
 
     await this.session.prompt(text);
 
@@ -459,8 +468,9 @@ export class Agent {
     const result = this.outputChunks.join('');
     const sessionStats = this.collectSessionStats();
     const error = this.lastAgentError;
+    const aborted = this.lastRunAborted;
 
-    return { result, sessionStats, error };
+    return { result, sessionStats, error, aborted };
   }
 
   /**

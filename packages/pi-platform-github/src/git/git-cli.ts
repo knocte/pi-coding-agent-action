@@ -13,6 +13,24 @@
  */
 
 import { simpleGit, type SimpleGit } from 'simple-git';
+
+/**
+ * Create a `SimpleGit` instance that preserves ambient `GIT_*` environment
+ * variables.
+ *
+ * simple-git v4 introduced an environment guard that strips all `GIT_*`
+ * variables from spawned git processes unless explicitly allowlisted. That
+ * silently breaks `GIT_CONFIG_GLOBAL`, `GIT_CONFIG_NOSYSTEM`,
+ * `GIT_SSH_COMMAND`, etc. set up by CI environments (e.g. `actions/checkout`
+ * or hardened runners), so we re-allowlist the standard git configuration
+ * variables here, restoring simple-git v3 semantics.
+ */
+export function createGit(cwd: string): SimpleGit {
+  return simpleGit({
+    baseDir: cwd,
+    allowEnvironment: ['GIT_CONFIG_GLOBAL', 'GIT_CONFIG_NOSYSTEM', 'GIT_SSH_COMMAND'],
+  });
+}
 import ignore from 'ignore';
 import type { PlatformType } from '@alexanderfortin/pi-orchestrator';
 import type { GitHubModuleDeps } from '../types';
@@ -174,7 +192,7 @@ export async function ensureGitIdentity(
  * @returns `true` when there are staged, unstaged, or untracked changes.
  */
 export async function workspaceHasChanges(cwd: string): Promise<boolean> {
-  return hasLocalChanges(simpleGit(cwd));
+  return hasLocalChanges(createGit(cwd));
 }
 
 /**
@@ -217,7 +235,7 @@ export interface WorkspaceChangePaths {
  * @returns Filtered changed and deleted paths.
  */
 export async function getWorkspaceChangePaths(cwd: string): Promise<WorkspaceChangePaths> {
-  const git = simpleGit(cwd);
+  const git = createGit(cwd);
   const output = await git.raw(['status', '--porcelain', '-uall']);
 
   const ig = ignore().add([...GITHUB_IGNORE_PATTERNS]);
@@ -425,7 +443,7 @@ export interface CommitAndPushOptions {
 export async function commitAndPushBranch(options: CommitAndPushOptions): Promise<string> {
   const { cwd, branchName, message, isNewBranch, actor, log } = options;
 
-  const git = simpleGit(cwd);
+  const git = createGit(cwd);
 
   // Ensure git identity is configured (Forgejo runners have none)
   await ensureGitIdentity(git, actor, log, options.gitIdentityOptions);

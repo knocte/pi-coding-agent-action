@@ -29,7 +29,12 @@ function createStubAgent(
     ready: overrides.ready ?? vi.fn(async () => undefined as unknown as Agent),
     run:
       overrides.run ??
-      vi.fn(async () => ({ result: 'ok', sessionStats: undefined, error: undefined })),
+      vi.fn(async () => ({
+        result: 'ok',
+        sessionStats: undefined,
+        error: undefined,
+        aborted: false,
+      })),
     getSessionStats: overrides.getSessionStats ?? vi.fn(() => undefined),
     exportSessionHtml: overrides.exportSessionHtml ?? vi.fn(async () => '/tmp/out.html'),
     exportSessionJsonl: overrides.exportSessionJsonl ?? vi.fn(async () => '/tmp/out.jsonl'),
@@ -44,6 +49,7 @@ describe('wrapAgent', () => {
       result: 'hello back',
       sessionStats: undefined,
       error: undefined,
+      aborted: false,
     }));
     const getSessionStats = vi.fn(() => ({
       inputTokens: 10,
@@ -71,6 +77,7 @@ describe('wrapAgent', () => {
       result: 'hello back',
       sessionStats: undefined,
       error: undefined,
+      aborted: false,
     });
     expect(wrapped.getSessionStats()).toEqual({
       inputTokens: 10,
@@ -101,7 +108,7 @@ describe('wrapAgent', () => {
       }),
       run: vi.fn(async () => {
         callOrder.push('run');
-        return { result: 'ok', sessionStats: undefined, error: undefined };
+        return { result: 'ok', sessionStats: undefined, error: undefined, aborted: false };
       }),
     });
 

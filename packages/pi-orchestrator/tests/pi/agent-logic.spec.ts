@@ -527,6 +527,7 @@ describe('Agent', () => {
           version: expect.any(String),
         },
         error: undefined,
+        aborted: false,
       });
     });
 
@@ -548,6 +549,7 @@ describe('Agent', () => {
         result: '',
         sessionStats: undefined,
         error: undefined,
+        aborted: false,
       });
     });
 
@@ -574,6 +576,7 @@ describe('Agent', () => {
           version: expect.any(String),
         },
         error: undefined,
+        aborted: false,
       });
     });
 
@@ -600,6 +603,7 @@ describe('Agent', () => {
           version: expect.any(String),
         },
         error: undefined,
+        aborted: false,
       });
     });
 
@@ -692,6 +696,36 @@ describe('Agent', () => {
 
       await agent.run('Hello');
       expect(onComplete).toHaveBeenCalledTimes(1);
+    });
+
+    test('run() surfaces the aborted flag from agent_settled', async () => {
+      const agent = createRealAgent();
+      await agent.ready();
+
+      let listener: ((event: { type: string; [key: string]: unknown }) => void) | undefined;
+      injectMockSession(agent, {
+        ...buildMockSession({ messages: [] }),
+        prompt: async () => {
+          listener?.({ type: 'agent_settled', aborted: true });
+        },
+        subscribe: (cb: (event: { type: string; [key: string]: unknown }) => void) => {
+          listener = cb;
+        },
+      });
+
+      const result = await agent.run('Hello');
+      expect(result.aborted).toBe(true);
+      expect(result.error).toBeUndefined();
+    });
+
+    test('run() defaults aborted to false for a normal settled run', async () => {
+      const agent = createRealAgent();
+      await agent.ready();
+
+      injectMockSession(agent, buildMockSession({ messages: [] }));
+
+      const result = await agent.run('Hello');
+      expect(result.aborted).toBe(false);
     });
 
     test('onPromptComplete is NOT called for individual agent_end events', async () => {

@@ -112,13 +112,18 @@ export class ActionOrchestrator {
       reaction = await this.addReactionBestEffort();
 
       pi = this.piAgentFactory(this.config, this.logger, this.platformProvider);
-      const { result, sessionStats, error } = await pi.run(prompt);
+      const { result, sessionStats, error, aborted } = await pi.run(prompt);
 
       await this.runSessionExports(pi);
       await this.runSessionShare();
 
       if (error) {
         await this.handleSessionError(error, result, startTime, reaction, sessionStats);
+        return;
+      }
+
+      if (aborted) {
+        await this.handleAbortedRun(result, startTime, reaction, sessionStats);
         return;
       }
 
@@ -188,6 +193,25 @@ export class ActionOrchestrator {
       this.logger.debug('[session-jsonl] export disabled by configuration');
     }
     await Promise.all(exportPromises);
+  }
+
+  /**
+   * Handle a run that ended because it was aborted (e.g. a cancellation
+   * requested mid-run). Such a run may only have partial output, so it is
+   * not reported as a success: posts a warning comment with any partial
+   * result and marks the action as failed, mirroring {@link handleSessionError}.
+   */
+  private async handleAbortedRun(
+    result: string,
+    startTime: Temporal.Instant,
+    reaction: CreateReactionType | undefined,
+    sessionStats: SessionStats | undefined
+  ): Promise<void> {
+    const message = 'Agent session was aborted before completing';
+    this.logSessionBanner(`⚠️ ${message}`);
+    const body = buildSessionErrorBody(result, message);
+    await this.finalize(body, this.config, startTime, reaction, sessionStats, false);
+    this.outputSink.setFailed(new Error(message));
   }
 
   /**

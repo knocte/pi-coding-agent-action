@@ -149,6 +149,16 @@ export interface PromptResult {
    * instead of posting a misleading success comment.
    */
   error: string | undefined;
+  /**
+   * Whether the run ended because it was aborted (e.g. a cancellation
+   * requested mid-run) rather than finishing normally.
+   *
+   * Sourced from the `aborted` flag on the SDK's `agent_settled` event
+   * (Pi SDK >= 1.1.0), so the orchestrator can tell a cancelled run from a
+   * finished one — a cancelled run may only have partial output and should
+   * not be reported as a success.
+   */
+  aborted: boolean;
 }
 
 /**
